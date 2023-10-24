@@ -4,13 +4,24 @@ This document describes how to buid and run [Parse Server](https://parseplatform
 
 ## Prerequisites
 
+The Oracle SQL client is a software application that allows users to connect to Oracle databases and execute SQL queries, manage, and interact with the database.
+
 [SQL Client](https://www.oracle.com/database/sqldeveloper/technologies/sqlcl/download/)
+
+The Oracle Instant Client is a set of software libraries that allow you to connect to an Oracle database without a full Oracle database installation.
 
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Building Parse with Oracle Storage Adapter
 1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Use the alpha branch
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
+   ```
+   cd src/Adapters/Storage
+   git clone git@github.com:oracle-samples/oracleadapter-parse.git Oracle
+   cd Oracle
+   rm -rf .git    // IMPORTANT or build will fail
+   cd ../../../.. // Go back to Project Root
+   ```
 3. Add the Oracle database dependency to package.json
 
     ```"oracledb": "^5.5.0",```
@@ -28,7 +39,7 @@ This document describes how to buid and run [Parse Server](https://parseplatform
     ```
     to the case statement
 6. Run ```npm install``` to get Oracle database dependencies
-7. Run ```npm ci --legacy-peer-deps``` to build the server
+7. Run ```npm ci``` to build the server
 
 ## Configuring Free23c Oracle database image
 1. Get and Start the image
