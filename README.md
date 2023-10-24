@@ -1,44 +1,128 @@
-*This repository acts as a template for all of Oracle’s GitHub repositories. It contains information about the guidelines for those repositories. All files and sections contained in this template are mandatory, and a GitHub app ensures alignment with these guidelines. To get started with a new repository, replace the italic paragraphs with the respective text for your project.*
+# Oracle Storage Adapter for Parse Server
 
-# Project name
+This document describes how to buid and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free23c Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. The team is currently working with Parse to upstream the adapter to their [Parse repository](https://github.com/parse-community/parse-server) but, in the meantime, this is an early adopter version.
 
-*Describe your project's features, functionality and target audience*
+## Prerequisites
 
-## Installation
+[SQL Client](https://www.oracle.com/database/sqldeveloper/technologies/sqlcl/download/)
 
-*Provide detailed step-by-step installation instructions. You can name this section **How to Run** or **Getting Started** instead of **Installation** if that's more acceptable for your project*
+[Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
-## Documentation
+## Building Parse with Oracle Storage Adapter
+1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Use the alpha branch
+2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
+3. Add the Oracle database dependency to package.json
 
-*Developer-oriented documentation can be published on GitHub, but all product documentation must be published on <https://docs.oracle.com>*
+    ```"oracledb": "^5.5.0",```
+4. Edit src/Controllers/index.js and add import
 
-## Examples
+   ```import OracleStorageAdapter from '../Adapters/Storage/Oracle/OracleStorageAdapter';```
+5. Scroll to the bottom of the file and add
+    ```
+    case 'oracledb:':
+      return new OracleStorageAdapter({
+        uri: databaseURI,
+        collectionPrefix,
+        databaseOptions,
+    });
+    ```
+    to the case statement
+6. Run ```npm install``` to get Oracle database dependencies
+7. Run ```npm ci --legacy-peer-deps``` to build the server
 
-*Describe any included examples or provide a link to a demo/tutorial*
+## Configuring Free23c Oracle database image
+1. Get and Start the image
 
-## Help
+    ```docker run --name free23c -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest```
 
-*Inform users on where to get help or how to receive official support from Oracle (if applicable)*
+   It takes about a minute for the image to reach a healthy state on my MacBook
 
-## Contributing
+2. Connect to the image as sysdba
 
-*If your project has specific contribution requirements, update the CONTRIBUTING.md file to ensure those requirements are clearly explained*
+    ```sql sys/Welcome12345@localhost:1521/free as sysdba```
 
-This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
+   and run the following commands to enable JSON support
 
-## Security
+    ```
+    alter session set container=FREEPDB1;
+    grant db_developer_role to pdbadmin;
+    grant soda_app to pdbadmin;
+    GRANT UNLIMITED TABLESPACE TO pdbadmin;
+    quit;
+    ```
 
-Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+## Run Parse Server
+1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server
+    ```
+    {
+    "appId": "APPLICATION_ID",
+    "masterKey": "MASTER_KEY",
+    "databaseURI": "oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1",
+    "port": 1338,
+    "logLevel": "info",
+    "verbose": false,
+    "mountGraphQL": true,
+    "mountPlayground": true,
+    "graphQLPath": "/graphql"
+    }
+    ```
 
-## License
+2. Boot the Server using the Oracle Instant Client location
 
-*The correct copyright notice format for both documentation and software is*
-    "Copyright (c) [year,] year Oracle and/or its affiliates."
-*You must include the year the content was first released (on any platform) and the most recent year in which it was revised*
+    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8  npm start -- ./config.json```
 
-Copyright (c) 2023 Oracle and/or its affiliates.
 
-*Replace this statement if your project is not licensed under the UPL*
+## Test the Local Stack
+1. Run a curl command
 
-Released under the Universal Permissive License v1.0 as shown at
-<https://oss.oracle.com/licenses/upl/>.
+    ```curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"score":12,"playerName":"scooby","cheatmode":false}' http://localhost:1338/parse/classes/GameScore```
+
+   Upon success
+
+    ```{"objectId":"CdmLJT6Duc","createdAt":"2023-10-16T19:33:27.382Z"}```
+
+2. Connect to the database and verify
+
+    ```sql pdbadmin/Welcome12345@localhost:1521/FREEPDB1```
+
+3. Run SODA commands
+
+    ```
+    SQL> soda list
+    List of collections:
+
+	GameScore
+	_Hooks
+	_Idempotency
+	_Role
+	_SCHEMA
+	_User
+
+    SQL> soda get GameScore
+	KEY						                Created On
+
+	3A8CB47A41A74F59BFDD143A3F365F4A		2023-10-16T19:33:27.404374000Z
+
+    1 row selected. 
+
+    SQL> soda get GameScore -k 3A8CB47A41A74F59BFDD143A3F365F4A
+
+    Key:    	 3A8CB47A41A74F59BFDD143A3F365F4A
+    Content:	 {"score":12,"playerName":"scooby","cheatmode":false,"updatedAt":"2023-10-16T19:33:27.382Z","createdAt":"2023-10-16T19:33:27.382Z","_id":"CdmLJT6Duc"}
+
+    1 row selected. 
+
+
+     soda help – list all soda commands
+
+    ```
+
+ 
+## Running against Autonomous Database in the cloud
+1. Update databaseURI in config.json to point at the cloud database instance
+
+    ``` "databaseURI": "oracledb://username:password@tnsname",```
+
+2. Download the cloud database wallet and use it when starting the server
+
+    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json```
