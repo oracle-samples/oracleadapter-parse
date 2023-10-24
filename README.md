@@ -137,3 +137,18 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
 2. Download the cloud database wallet and use it when starting the server
 
     ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json```
+
+## Contributing
+
+This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
+
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
+## License
+
+Copyright (c) 2023 Oracle and/or its affiliates.
+
+Released under the Universal Permissive License v1.0 as shown at
+<https://oss.oracle.com/licenses/upl/>.
