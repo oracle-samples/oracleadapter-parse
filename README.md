@@ -12,7 +12,7 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
 
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
-## Building Parse with Oracle Storage Adapter
+## Installation
 1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Use the alpha branch
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
    ```
@@ -22,13 +22,17 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
    rm -rf .git    // IMPORTANT or build will fail
    cd ../../../.. // Go back to Project Root
    ```
-3. Add the Oracle database dependency to package.json
+
+
+## Getting Started
+### Building Parse with Oracle Storage Adpater
+1. Add the Oracle database dependency to package.json
 
     ```"oracledb": "^5.5.0",```
-4. Edit src/Controllers/index.js and add import
+2. Edit src/Controllers/index.js and add import
 
    ```import OracleStorageAdapter from '../Adapters/Storage/Oracle/OracleStorageAdapter';```
-5. Scroll to the bottom of the file and add
+3. Scroll to the bottom of the file and add
     ```
     case 'oracledb:':
       return new OracleStorageAdapter({
@@ -38,10 +42,11 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
     });
     ```
     to the case statement
-6. Run ```npm install``` to get Oracle database dependencies
-7. Run ```npm ci``` to build the server
+4. Run ```npm install``` to get Oracle database dependencies
+5. Run ```npm ci``` to build the server
 
-## Configuring Free23c Oracle database image
+## How To Run
+### Configuring Free23c Oracle database image
 1. Get and Start the image
 
     ```docker run --name free23c -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest```
@@ -62,7 +67,7 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
     quit;
     ```
 
-## Run Parse Server
+### Run Parse Server
 1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server
     ```
     {
@@ -83,7 +88,7 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
     ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8  npm start -- ./config.json```
 
 
-## Test the Local Stack
+### Test the Local Stack
 1. Run a curl command
 
     ```curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"score":12,"playerName":"scooby","cheatmode":false}' http://localhost:1338/parse/classes/GameScore```
@@ -129,7 +134,7 @@ The Oracle Instant Client is a set of software libraries that allow you to conne
     ```
 
  
-## Running against Autonomous Database in the cloud
+### Running against Autonomous Database in the cloud
 1. Update databaseURI in config.json to point at the cloud database instance
 
     ``` "databaseURI": "oracledb://username:password@tnsname",```
