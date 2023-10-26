@@ -1,14 +1,14 @@
 # Oracle Storage Adapter for Parse Server
 
-This document describes how to buid and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free23c Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. The team is currently working with Parse to upstream the adapter to their [Parse repository](https://github.com/parse-community/parse-server) but, in the meantime, this is an early adopter version.
+This document describes how to build and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free23c Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. The team is currently working with Parse to upstream the adapter to their [Parse repository](https://github.com/parse-community/parse-server) but, in the meantime, this is an early adopter version.
 
 ## Prerequisites
 
-The Oracle SQL client is a software application that allows users to connect to Oracle databases and execute SQL queries, manage, and interact with the database.
+The Oracle SQL client is a software application that allows users to connect to an Oracle database and execute queries and manage the database.
 
 [SQL Client](https://www.oracle.com/database/sqldeveloper/technologies/sqlcl/download/)
 
-The Oracle Instant Client is a set of software libraries that allow you to connect to an Oracle database without a full Oracle database installation.
+The Oracle Instant Client is a set of software libraries that allow users to connect to an Oracle database without a full Oracle database installation.
 
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
