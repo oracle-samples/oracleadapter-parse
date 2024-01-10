@@ -1,6 +1,5 @@
 // Copyright (c) 2023, Oracle and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
-import defaults from '../../../defaults';
 import OracleSchemaCollection from './OracleSchemaCollection';
 import OracleCollection from './OracleCollection';
 import { StorageAdapter } from '../StorageAdapter';
@@ -130,17 +129,15 @@ export class OracleStorageAdapter implements StorageAdapter {
   _connectionPool: Pool;
   _collections: Map<String, OracleCollection>;
 
-  constructor({ uri = defaults.DefaultOracleURI, collectionPrefix = '', oracleOptions = {} }: any) {
+  constructor(options: any) {
     logger.verbose(
       'OracleStorageAdapter constructor, uri = ' +
-        uri +
+        options.databaseURI +
         ' collectionPrefix = ' +
-        collectionPrefix +
-        ' oracleOptions = ' +
-        JSON.stringify(oracleOptions)
+        options.collectionPrefix
     );
-    this._uri = uri;
-    this._collectionPrefix = collectionPrefix;
+    this._uri = options.databaseURI;
+    this._collectionPrefix = options.collectionPrefix;
     this._connectionPool = null;
     this._collections = new Map();
   }
@@ -343,14 +340,14 @@ export class OracleStorageAdapter implements StorageAdapter {
   }
 
   handleError<T>(error: ?(Error | Parse.Error)): Promise<T> {
-    // if (error && error.code === 13) {
-    //   // Unauthorized error
-    //   delete this.client;
-    //   delete this.database;
-    //   delete this.connectionPromise;
-    //   logger.error('Received unauthorized error', { error: error });
-    // }
-    logger.error('in handleError with error =' + error);
+    if (error && error.code === 13) {
+      // Unauthorized error
+      delete this.client;
+      delete this.database;
+      delete this.connectionPromise;
+      logger.error('Received unauthorized error', { error: error });
+    }
+
     // What to throw?  Maybe need to map ORA msgs to Parse msgs
     // throw error.message;
     throw error;
@@ -520,20 +517,6 @@ export class OracleStorageAdapter implements StorageAdapter {
     }
   }
 
-  // deleteObjectsByQuery(
-  //   className: string,
-  //   schema: SchemaType,
-  //   query: QueryType,
-  //   transactionalSession: ?any
-  // ): Promise<void>;
-  // updateObjectsByQuery(
-  //   className: string,
-  //   schema: SchemaType,
-  //   query: QueryType,
-  //   update: any,
-  //   transactionalSession: ?any
-  // ): Promise<[any]>;
-
   async findOneAndUpdate(className, schema, query, update, transactionalSession) {
     try {
       logger.verbose('StorageAdapter findOneAndUpdate for ' + className);
@@ -690,7 +673,6 @@ export class OracleStorageAdapter implements StorageAdapter {
       logger.verbose('StorageAdapter deleteObjectsByQuery returns ' + result);
       return result;
     } catch (error) {
-      logger.error('StorageAdapter deleteObjectsByQuery Error for ' + className);
       this.handleError(error);
     }
   }

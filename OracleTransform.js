@@ -888,14 +888,15 @@ const transformUpdate = (className, restUpdate, parseFormatSchema) => {
   if (acl._rperm || acl._wperm || acl._acl) {
     oraUpdate.$set = {};
     if (acl._rperm) {
-      oraUpdate.$set._rperm = acl._rperm;
+      oraUpdate._rperm = acl._rperm;
     }
     if (acl._wperm) {
-      oraUpdate.$set._wperm = acl._wperm;
+      oraUpdate._wperm = acl._wperm;
     }
     if (acl._acl) {
-      oraUpdate.$set._acl = acl._acl;
+      oraUpdate._acl = acl._acl;
     }
+    delete oraUpdate.$set;
   }
   for (var restKey in restUpdate) {
     if (restUpdate[restKey] && restUpdate[restKey].__type === 'Relation') {
