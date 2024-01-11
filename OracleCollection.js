@@ -40,7 +40,6 @@ export default class OracleCollection {
       .connect()
       .then(p => {
         logger.verbose('getCollectionConnection about to get connection from pool ');
-        logger.verbose(p);
         logger.verbose('  statistics: ' + JSON.stringify(p.getStatistics()));
         return p.getConnection();
       })
@@ -503,46 +502,41 @@ export default class OracleCollection {
   }
 
   async deleteObjectsByQuery(query, transactionalSession) {
-    try {
-      logger.verbose('in Collection deleteObjectsByQuery query = ' + JSON.stringify(query));
-      logger.verbose(
-        'use transactionalSession to make linter happy ' + JSON.stringify(transactionalSession)
-      );
+    logger.verbose('in Collection deleteObjectsByQuery query = ' + JSON.stringify(query));
+    logger.verbose(
+      'use transactionalSession to make linter happy ' + JSON.stringify(transactionalSession)
+    );
 
-      const result = await this._rawFind(query, { type: 'all' }).then(result => {
-        return result;
-      });
+    const result = await this._rawFind(query, { type: 'all' }).then(result => {
+      return result;
+    });
 
-      if (result.length > 0) {
-        for (let i = 0; i < result.length; i++) {
-          // found the doc, so we need to update it
-          const key = result[i].key;
-          logger.verbose('key = ' + key);
-          const version = result[i].version;
-          logger.verbose('version = ' + version);
-          let localConn = null;
-          return this.getCollectionConnection()
-            .then(conn => {
-              localConn = conn;
-              return this._oracleCollection.find().key(key).version(version).remove();
-            })
-            .finally(() => {
-              if (localConn) {
-                localConn.close();
-                localConn = null;
-              }
-            })
-            .catch(error => {
-              logger.error('Delete Objects By Query remove ERROR: ', error);
-              throw error;
-            });
-        }
-      } else {
-        throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Object not found.');
+    if (result.length > 0) {
+      for (let i = 0; i < result.length; i++) {
+        // found the doc, so we need to update it
+        const key = result[i].key;
+        logger.verbose('key = ' + key);
+        const version = result[i].version;
+        logger.verbose('version = ' + version);
+        let localConn = null;
+        return this.getCollectionConnection()
+          .then(conn => {
+            localConn = conn;
+            return this._oracleCollection.find().key(key).version(version).remove();
+          })
+          .finally(() => {
+            if (localConn) {
+              localConn.close();
+              localConn = null;
+            }
+          })
+          .catch(error => {
+            logger.error('Delete Objects By Query remove ERROR: ', error);
+            throw error;
+          });
       }
-    } catch (error) {
-      logger.error('Delete Objects By Query ERROR: ', error);
-      throw error;
+    } else {
+      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Object not found.');
     }
   }
 

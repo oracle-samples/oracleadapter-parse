@@ -26,23 +26,19 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 
 ## Getting Started
 ### Building Parse with Oracle Storage Adpater
-1. Add the Oracle database dependency to package.json
+1. Add the Oracle database dependency
 
-    ```"oracledb": "^5.5.0",```
-2. Edit src/Controllers/index.js and add import
+    ```npm install oracledb@6.2.0```
 
-   ```import OracleStorageAdapter from '../Adapters/Storage/Oracle/OracleStorageAdapter';```
-3. Scroll to the bottom of the file and add
-    ```
-    case 'oracledb:':
-      return new OracleStorageAdapter({
-        uri: databaseURI,
-        collectionPrefix,
-        databaseOptions,
-    });
-    ```
-    to the case statement
-4. Run ```npm install``` to get Oracle database dependencies
+    [Quick Start node-oracledb Installation](https://node-oracledb.readthedocs.io/en/latest/user_guide/installation.html#quick-start-node-oracledb-installation)
+2. Add the Parse File Adapter dependency
+
+    ```npm install --save @parse/fs-files-adapter```
+
+    This defaults to local storage. 
+
+    [Parse Server File Storage Adapter Repository](https://github.com/parse-community/parse-server-fs-adapter)
+
 5. Run ```npm ci``` to build the server
 
 ## How To Run
@@ -68,20 +64,29 @@ The Oracle Instant Client is a set of software libraries that allow users to con
     ```
 
 ### Run Parse Server
-1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server
-    ```
-    {
-    "appId": "APPLICATION_ID",
-    "masterKey": "MASTER_KEY",
-    "databaseURI": "oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1",
-    "port": 1338,
-    "logLevel": "info",
-    "verbose": false,
-    "mountGraphQL": true,
-    "mountPlayground": true,
-    "graphQLPath": "/graphql"
+1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server. The databaseURI is configured to attach to the local 23c Oracle Database instance.
+```
+{
+  "appId": "APPLICATION_ID",
+  "masterKey": "MASTER_KEY",
+  "port": 1338,
+  "logLevel": "info",
+  "verbose": false,
+  "mountGraphQL": true,
+  "mountPlayground": true,
+  "graphQLPath": "/graphql",
+  "filesAdapter": {
+    "module": "@parse/fs-files-adapter"
+  },
+  "databaseAdapter": {
+    "module": "../Adapters/Storage/Oracle/OracleStorageAdapter",
+    "options": {
+      "databaseURI": "oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1",
+      "collectionPrefix": ""
     }
-    ```
+  }
+}  
+```
 
 2. Boot the Server using the Oracle Instant Client location
 
@@ -135,7 +140,7 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 
  
 ### Running against Autonomous Database in the cloud
-1. Update databaseURI in config.json to point at the cloud database instance
+1. Update databaseAdapter.options.databaseURI in config.json to point at the cloud database instance
 
     ``` "databaseURI": "oracledb://username:password@tnsname",```
 
