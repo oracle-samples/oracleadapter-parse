@@ -13,22 +13,26 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Installation
-1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Use the alpha branch
+1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Tested with version 6.4
+```
+git clone --depth 1 --branch 6.4.0 https://github.com/parse-community/parse-server.git
+cd parse-server
+```
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
-   ```
-   cd src/Adapters/Storage
-   git clone git@github.com:oracle-samples/oracleadapter-parse.git Oracle
-   cd Oracle
-   rm -rf .git    // IMPORTANT or build will fail
-   cd ../../../.. // Go back to Project Root
-   ```
+ ```
+cd src/Adapters/Storage
+git clone git@github.com:oracle-samples/oracleadapter-parse.git Oracle
+cd Oracle
+rm -rf .git    // IMPORTANT or build will fail
+cd ../../../.. // Go back to Project Root
+```
 
 
 ## Getting Started
 ### Building Parse with Oracle Storage Adpater
 1. Add the Oracle database dependency
 
-    ```npm install oracledb@6.2.0```
+    ```npm install oracledb@6.4.0```
 
     [Quick Start node-oracledb Installation](https://node-oracledb.readthedocs.io/en/latest/user_guide/installation.html#quick-start-node-oracledb-installation)
 2. Add the Parse File Adapter dependency
@@ -87,8 +91,12 @@ The Oracle Instant Client is a set of software libraries that allow users to con
   }
 }  
 ```
+2. If running against an Oracle 19c database
+```
+export ORACLEDB_VERSION=19
+```
 
-2. Boot the Server using the Oracle Instant Client location
+3. Boot the Server using the Oracle Instant Client location
 
     ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8  npm start -- ./config.json```
 

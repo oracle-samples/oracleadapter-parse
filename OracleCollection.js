@@ -10,6 +10,14 @@ oracledb.autoCommit = true;
 const Collection = oracledb.SodaCollection;
 const SodaDB = oracledb.SodaDB;
 
+const DB_VERSION = process.env.ORACLEDB_VERSION;
+const ddlTimeOut = `
+BEGIN
+    EXECUTE IMMEDIATE ('
+    alter session set ddl_lock_timeout=1000
+    ');
+END;`;
+
 export default class OracleCollection {
   _oracleSodaDB: SodaDB;
   _oracleCollection: Collection;
@@ -17,18 +25,23 @@ export default class OracleCollection {
   _name: string;
   indexes = new Array();
   idIndexCreating = false;
+  jsonSQLtype = 'JSON'; //DBVersion 23c default
 
   constructor(oracleStorageAdapter: OracleStorageAdapter, collectionName: String) {
     this._oracleStorageAdapter = oracleStorageAdapter;
     this._name = collectionName;
     this._oracleCollection = undefined;
+    logger.verbose('Oracle Database Version = ' + DB_VERSION);
+    // To support backwards compatibility with instant clients
+    if (typeof DB_VERSION !== 'undefined' && DB_VERSION !== '23') {
+      this.jsonSQLtype = 'BLOB';
+    }
   }
 
   async getCollectionConnection() {
-    // To support backwards compatibility with instant clients
     const mymetadata = {
       keyColumn: { name: 'ID', assignmentMethod: 'UUID' },
-      contentColumn: { name: 'JSON_DOCUMENT', sqlType: 'BLOB' },
+      contentColumn: { name: 'JSON_DOCUMENT', sqlType: this.jsonSQLtype },
       versionColumn: { name: 'VERSION', method: 'UUID' },
       lastModifiedColumn: { name: 'LAST_MODIFIED' },
       creationTimeColumn: { name: 'CREATED_ON' },
@@ -366,9 +379,9 @@ export default class OracleCollection {
               return 'retry';
             }
           })
-          .finally(() => {
+          .finally(async () => {
             if (localConn) {
-              localConn.close();
+              await localConn.close();
               localConn = null;
             }
           })
@@ -441,9 +454,9 @@ export default class OracleCollection {
             return 'retry';
           }
         })
-        .finally(() => {
+        .finally(async () => {
           if (localConn) {
-            localConn.close();
+            await localConn.close();
             localConn = null;
           }
         })
@@ -482,9 +495,9 @@ export default class OracleCollection {
             localConn = conn;
             return this._oracleCollection.find().key(key).version(version).remove();
           })
-          .finally(() => {
+          .finally(async () => {
             if (localConn) {
-              localConn.close();
+              await localConn.close();
               localConn = null;
             }
           })
@@ -502,41 +515,46 @@ export default class OracleCollection {
   }
 
   async deleteObjectsByQuery(query, transactionalSession) {
-    logger.verbose('in Collection deleteObjectsByQuery query = ' + JSON.stringify(query));
-    logger.verbose(
-      'use transactionalSession to make linter happy ' + JSON.stringify(transactionalSession)
-    );
+    try {
+      logger.verbose('in Collection deleteObjectsByQuery query = ' + JSON.stringify(query));
+      logger.verbose(
+        'use transactionalSession to make linter happy ' + JSON.stringify(transactionalSession)
+      );
 
-    const result = await this._rawFind(query, { type: 'all' }).then(result => {
-      return result;
-    });
+      const result = await this._rawFind(query, { type: 'all' }).then(result => {
+        return result;
+      });
 
-    if (result.length > 0) {
-      for (let i = 0; i < result.length; i++) {
-        // found the doc, so we need to update it
-        const key = result[i].key;
-        logger.verbose('key = ' + key);
-        const version = result[i].version;
-        logger.verbose('version = ' + version);
-        let localConn = null;
-        return this.getCollectionConnection()
-          .then(conn => {
-            localConn = conn;
-            return this._oracleCollection.find().key(key).version(version).remove();
-          })
-          .finally(() => {
-            if (localConn) {
-              localConn.close();
-              localConn = null;
-            }
-          })
-          .catch(error => {
-            logger.error('Delete Objects By Query remove ERROR: ', error);
-            throw error;
-          });
+      if (result.length > 0) {
+        for (let i = 0; i < result.length; i++) {
+          // found the doc, so we need to update it
+          const key = result[i].key;
+          logger.verbose('key = ' + key);
+          const version = result[i].version;
+          logger.verbose('version = ' + version);
+          let localConn = null;
+          return this.getCollectionConnection()
+            .then(conn => {
+              localConn = conn;
+              return this._oracleCollection.find().key(key).version(version).remove();
+            })
+            .finally(async () => {
+              if (localConn) {
+                await localConn.close();
+                localConn = null;
+              }
+            })
+            .catch(error => {
+              logger.error('Delete Objects By Query remove ERROR: ', error);
+              throw error;
+            });
+        }
+      } else {
+        throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Object not found.');
       }
-    } else {
-      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Object not found.');
+    } catch (error) {
+      logger.error('Delete Objects By Query ERROR: ', error);
+      throw error;
     }
   }
 
@@ -640,9 +658,9 @@ export default class OracleCollection {
           return 'retry';
         }
       })
-      .finally(() => {
+      .finally(async () => {
         if (localConn) {
-          localConn.close();
+          await localConn.close();
           localConn = null;
         }
       })
@@ -687,9 +705,9 @@ export default class OracleCollection {
               return 'retry';
             }
           })
-          .finally(() => {
+          .finally(async () => {
             if (localConn) {
-              localConn.close();
+              await localConn.close();
               localConn = null;
             }
           })
@@ -828,10 +846,10 @@ export default class OracleCollection {
           localConn = conn;
           findOperation = this._oracleCollection.find();
         })
-        .catch(error => {
+        .catch(async error => {
           logger.error('Error getting connection in _rawFind, ERROR =' + error);
           if (localConn) {
-            localConn.close();
+            await localConn.close();
             localConn = null;
           }
           throw error;
@@ -909,7 +927,7 @@ export default class OracleCollection {
             //query should not match on array when searching for null
             if (y === '$all' && Array.isArray(json[y]) && json[y][0] == null) {
               if (localConn) {
-                localConn.close();
+                await localConn.close();
                 localConn = null;
               }
               return [];
@@ -956,7 +974,7 @@ export default class OracleCollection {
                   typeof json[y][0] == 'object'
                 ) {
                   if (localConn) {
-                    localConn.close();
+                    await localConn.close();
                     localConn = null;
                   }
                   return [];
@@ -966,7 +984,7 @@ export default class OracleCollection {
               if (json[y].length == 0) {
                 if (y === '$in' || y === '$all') {
                   if (localConn) {
-                    localConn.close();
+                    await localConn.close();
                     localConn = null;
                   }
                   return [];
@@ -1135,9 +1153,9 @@ export default class OracleCollection {
           }
           return localDocs;
         })
-        .finally(() => {
+        .finally(async () => {
           if (localConn) {
-            localConn.close();
+            await localConn.close();
             localConn = null;
           }
         })
@@ -1147,7 +1165,7 @@ export default class OracleCollection {
         });
     } catch (error) {
       if (localConn) {
-        localConn.close();
+        await localConn.close();
         localConn = null;
       }
       logger.error('Error running _rawfind, ERROR =' + error);
@@ -1177,18 +1195,24 @@ export default class OracleCollection {
 
   async insertOne(object) {
     let localConn = null;
-    try {
-      localConn = await this.getCollectionConnection();
-      await this._oracleCollection.insertOne(object);
-      return object;
-    } catch (error) {
-      logger.error('error during insertOne = ' + error);
-      throw error;
-    } finally {
-      if (localConn) {
-        await localConn.close();
-      }
-    }
+
+    return this.getCollectionConnection()
+      .then(conn => {
+        localConn = conn;
+        localConn.execute(ddlTimeOut);
+        const result = this._oracleCollection.insertOne(object);
+        return result;
+      })
+      .finally(async () => {
+        if (localConn) {
+          await localConn.close();
+          localConn = null;
+        }
+      })
+      .catch(error => {
+        logger.error('error during insertOne = ' + error);
+        throw error;
+      });
   }
 
   async drop() {
@@ -1208,9 +1232,9 @@ export default class OracleCollection {
         }
         return result;
       })
-      .finally(() => {
+      .finally(async () => {
         if (localConn) {
-          localConn.close();
+          await localConn.close();
           localConn = null;
         }
       })
@@ -1229,11 +1253,15 @@ export default class OracleCollection {
     return this.getCollectionConnection()
       .then(conn => {
         localConn = conn;
-        return this._oracleCollection.find().remove();
+        if (typeof DB_VERSION === 'undefined' || DB_VERSION === '23') {
+          return this._oracleCollection.truncate();
+        } else {
+          return this._oracleCollection.find().remove();
+        }
       })
-      .finally(() => {
+      .finally(async () => {
         if (localConn) {
-          localConn.close();
+          await localConn.close();
           localConn = null;
         }
       })
@@ -1274,6 +1302,7 @@ export default class OracleCollection {
     return await this.getCollectionConnection()
       .then(async conn => {
         localConn = conn;
+        await localConn.execute(ddlTimeOut);
         await this._oracleCollection.createIndex(indexSpec);
         return Promise.resolve;
       })
@@ -1354,9 +1383,9 @@ export default class OracleCollection {
         const result = await this._oracleCollection.dropIndex(indexName);
         return result;
       })
-      .finally(() => {
+      .finally(async () => {
         if (localConn) {
-          localConn.close();
+          await localConn.close();
           localConn = null;
         }
       })
