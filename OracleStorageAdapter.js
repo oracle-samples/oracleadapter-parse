@@ -179,10 +179,17 @@ export class OracleStorageAdapter implements StorageAdapter {
     try {
       const collection = this._adaptiveCollection(collectionName);
       const result = await collection.truncate();
-      logger.verbose('Storage Adapter _truncate returns ' + result);
+      logger.verbose(
+        'Storage Adapter _truncate for collection ' +
+          collectionName +
+          ' returns ' +
+          JSON.stringify(result)
+      );
       return result;
     } catch (error) {
-      logger.error('Storage Adapter _truncate Error for ' + collectionName);
+      logger.error(
+        'Storage Adapter _truncate Error for  collection' + collectionName + '    ERROR = ' + error
+      );
       this.handleError(error);
     }
   }
@@ -346,6 +353,13 @@ export class OracleStorageAdapter implements StorageAdapter {
       delete this.database;
       delete this.connectionPromise;
       logger.error('Received unauthorized error', { error: error });
+    }
+
+    if (typeof error === 'object' && error.code !== 101 && error.code != 137) {
+      console.log(JSON.stringify(error));
+      if (error.errorNum === 0) {
+        console.trace();
+      }
     }
 
     // What to throw?  Maybe need to map ORA msgs to Parse msgs
@@ -673,6 +687,7 @@ export class OracleStorageAdapter implements StorageAdapter {
       logger.verbose('StorageAdapter deleteObjectsByQuery returns ' + result);
       return result;
     } catch (error) {
+      logger.error('StorageAdapter deleteObjectsByQuery Error for ' + className);
       this.handleError(error);
     }
   }
@@ -904,16 +919,11 @@ export class OracleStorageAdapter implements StorageAdapter {
       );
 
       const fieldName = Object.keys(indexCreationRequest)[0];
-      // TODO: This code made maxLength = 1 which caused all kinds of breakage
-      //       Determine the better way to do this but for now, default to 2000 which is what the JSON console did
-      //    const maxLength = indexCreationRequest[Object.keys(indexCreationRequest)[0]];
-      const maxLength = 2000;
       const indexRequest = {
         name: fieldName,
         fields: [
           {
             path: fieldName,
-            maxlength: maxLength,
           },
         ],
         unique: true,
@@ -945,16 +955,11 @@ export class OracleStorageAdapter implements StorageAdapter {
         indexCreationRequest[fieldName] = 1;
       });
       const fieldName = Object.keys(indexCreationRequest)[0];
-      // TODO: This code made maxLength = 1 which caused all kinds of breakage
-      //       Determine the better way to do this but for now, default to 2000 which is what the JSON console did
-      //    const maxLength = indexCreationRequest[Object.keys(indexCreationRequest)[0]];
-      const maxLength = 2000;
       const indexRequest = {
         name: fieldName,
         fields: [
           {
             path: fieldName,
-            maxlength: maxLength,
           },
         ],
         unique: true,
@@ -1108,7 +1113,6 @@ export class OracleStorageAdapter implements StorageAdapter {
     Object.keys(index).forEach(key => {
       paths.push({
         path: key,
-        maxlength: 2000,
       });
     });
     return paths;
