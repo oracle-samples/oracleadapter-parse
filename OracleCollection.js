@@ -1253,11 +1253,7 @@ export default class OracleCollection {
     return this.getCollectionConnection()
       .then(conn => {
         localConn = conn;
-        if (typeof DB_VERSION === 'undefined' || DB_VERSION === '23') {
-          return this._oracleCollection.truncate();
-        } else {
-          return this._oracleCollection.find().remove();
-        }
+        return this._oracleCollection.find().remove();
       })
       .finally(async () => {
         if (localConn) {
