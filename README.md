@@ -91,7 +91,7 @@ cd ../../../.. // Go back to Project Root
   }
 }  
 ```
-2. If running against an Oracle 19c database
+2. If using an Oracle Instant Client prior to 23ai
 ```
 export ORACLEDB_VERSION=19
 ```
