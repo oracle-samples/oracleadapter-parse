@@ -26,8 +26,8 @@ jobs:
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
       with:
-        repository: ddrechse/parse-server-database-adapter-template
-        ref: ''
+        repository: oracle-samples/oracleadapter-parse
+        ref: OracleParseStorageAdapter
         path: oraCodeAndSpecs        
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
