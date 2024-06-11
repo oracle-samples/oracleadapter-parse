@@ -2085,7 +2085,7 @@ describe('facebook limited auth adapter', () => {
     }
   });
 
-  it('should use algorithm from key header to verify id_token', async () => {
+  it_id('7bfa55ab-8fd7-4526-992e-6de3df16bf9c')('should use algorithm from key header to verify id_token', async () => {
     const fakeClaim = {
       iss: 'https://facebook.com',
       aud: 'secret',
@@ -2149,7 +2149,7 @@ describe('facebook limited auth adapter', () => {
     }
   });
 
-  it('(using client id as string) should verify id_token', async () => {
+  it_id('4bcb1a1a-11f8-4e12-a3f6-73f7e25e355a')('(using client id as string) should verify id_token', async () => {
     const fakeClaim = {
       iss: 'https://facebook.com',
       aud: 'secret',
@@ -2176,7 +2176,7 @@ describe('facebook limited auth adapter', () => {
     expect(result).toEqual(fakeClaim);
   });
 
-  it('(using client id as array) should verify id_token', async () => {
+  it_id('c521a272-2ac2-4d8b-b5ed-ea250336d8b1')('(using client id as array) should verify id_token', async () => {
     const fakeClaim = {
       iss: 'https://facebook.com',
       aud: 'secret',
@@ -2203,7 +2203,7 @@ describe('facebook limited auth adapter', () => {
     expect(result).toEqual(fakeClaim);
   });
 
-  it('(using client id as array with multiple items) should verify id_token', async () => {
+  it_id('e3f16404-18e9-4a87-a555-4710cfbdac67')('(using client id as array with multiple items) should verify id_token', async () => {
     const fakeClaim = {
       iss: 'https://facebook.com',
       aud: 'secret',
@@ -2230,7 +2230,7 @@ describe('facebook limited auth adapter', () => {
     expect(result).toEqual(fakeClaim);
   });
 
-  it('(using client id as string) should throw error with with invalid jwt issuer', async () => {
+  it_id('549c33a1-3a6b-4732-8cf6-8f010ad4569c')('(using client id as string) should throw error with with invalid jwt issuer', async () => {
     const fakeClaim = {
       iss: 'https://not.facebook.com',
       sub: 'the_user_id',
@@ -2297,7 +2297,7 @@ describe('facebook limited auth adapter', () => {
     }
   });
 
-  it('(using client id as string) should throw error with with invalid jwt issuer', async () => {
+  it_id('afbe5693-e2b8-4e9c-b470-eda4b6b31dce')('(using client id as string) should throw error with with invalid jwt issuer', async () => {
     const fakeClaim = {
       iss: 'https://not.facebook.com',
       sub: 'the_user_id',
@@ -2382,7 +2382,7 @@ describe('facebook limited auth adapter', () => {
     }
   });
 
-  it('should throw error with with invalid user id', async () => {
+  it_id('c194d902-e697-46c9-a303-82c2d914473c')('should throw error with with invalid user id', async () => {
     const fakeClaim = {
       iss: 'https://facebook.com',
       aud: 'invalid_client_id',
