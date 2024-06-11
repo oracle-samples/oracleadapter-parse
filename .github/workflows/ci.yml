@@ -94,25 +94,25 @@ jobs:
 #           mkdir oralogs;
 #           docker cp free23c:</opt/oracle/diag/rdbms/free/FREE/trace/alert_*.log oralogs;
 #           ls -la oralogs;
-#    - name: Dump Container logs
-#      if: always()
-#      run: mkdir oralogs;
-#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
-#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
-#           ls -la oralogs;
-#           ls -la oradumps;
-#    - name: Archive Test Results
-#      if: always()
-#      uses: actions/upload-artifact@v1
-#      with:
-#       name: containerlogs
-#       path: oralogs/trace 
-#    - name: Archive Test Results
-#      if: always()
-#      uses: actions/upload-artifact@v1
-#      with:
-#       name: containerdumps
-#       path: oradumps       
+    - name: Dump Container logs
+      if: always()
+      run: mkdir oralogs;
+           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
+           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
+           ls -la oralogs;
+           ls -la oradumps;
+    - name: Archive Test Results
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+       name: containerlogs
+       path: oralogs/trace 
+    - name: Archive Test Results
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+       name: containerdumps
+       path: oradumps       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
