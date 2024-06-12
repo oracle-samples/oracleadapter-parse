@@ -26,8 +26,8 @@ jobs:
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
       with:
-        repository: ddrechse/parse-server-database-adapter-template
-        ref: ''
+        repository: oracle-samples/oracleadapter-parse
+        ref: OracleParseStorageAdapter
         path: oraCodeAndSpecs        
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
@@ -91,28 +91,25 @@ jobs:
            export PARSE_SERVER_DATABASE_ADAPTER='{"module":"../Adapters/Storage/Oracle/OracleStorageAdapter","options":{"databaseURI":"oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1","collectionPrefix":"test_"}}';
            echo $PARSE_SERVER_DATABASE_ADAPTER;
            npm run testonly;
-#           mkdir oralogs;
-#           docker cp free23c:</opt/oracle/diag/rdbms/free/FREE/trace/alert_*.log oralogs;
+#    - name: Dump Container logs
+#      if: always()
+#      run: mkdir oralogs;
+#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
+#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
 #           ls -la oralogs;
-    - name: Dump Container logs
-      if: always()
-      run: mkdir oralogs;
-           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
-           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
-           ls -la oralogs;
-           ls -la oradumps;
-    - name: Archive Test Results
-      if: always()
-      uses: actions/upload-artifact@v1
-      with:
-       name: containerlogs
-       path: oralogs/trace 
-    - name: Archive Test Results
-      if: always()
-      uses: actions/upload-artifact@v1
-      with:
-       name: containerdumps
-       path: oradumps       
+#           ls -la oradumps;
+#    - name: Archive Test Results
+#      if: always()
+#      uses: actions/upload-artifact@v1
+#      with:
+#       name: containerlogs
+#       path: oralogs/trace 
+#    - name: Archive Test Results
+#      if: always()
+#      uses: actions/upload-artifact@v1
+#      with:
+#       name: containerdumps
+#       path: oradumps       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
