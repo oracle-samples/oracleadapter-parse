@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: parse-community/parse-server
-        ref: 7.1.0-alpha.7
+        ref: 7.1.0
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
