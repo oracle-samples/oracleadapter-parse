@@ -27,7 +27,7 @@ cd parse-server
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
  ```
 cd src/Adapters/Storage
-git clone git@github.com:oracle-samples/oracleadapter-parse.git Oracle
+git clone https://github.com/oracle-samples/oracleadapter-parse.git Oracle
 cd Oracle
 rm -rf .git    # IMPORTANT or build will fail
 cd ../../../.. # Go back to Project Root
@@ -38,30 +38,43 @@ cd ../../../.. # Go back to Project Root
 ### Building Parse with Oracle Storage Adpater
 1. Add the Oracle database dependency
 
-    ```npm install oracledb@6.5.0```
+    ```
+    npm install oracledb@6.5.0
+    ```
 
     [Quick Start node-oracledb Installation](https://node-oracledb.readthedocs.io/en/latest/user_guide/installation.html#quick-start-node-oracledb-installation)
+
 2. Add the Parse File Adapter dependency
 
-    ```npm install --save @parse/fs-files-adapter```
+    ```
+    npm install --save @parse/fs-files-adapter
+    ```
 
     This defaults to local storage. 
 
     [Parse Server File Storage Adapter Repository](https://github.com/parse-community/parse-server-fs-adapter)
 
-5. Run ```npm ci``` to build the server
+3. Run 
+    ```
+    npm ci
+    ``` 
+    to build the server
 
 ## How To Run
 ### Configuring Free23c Oracle database image
 1. Get and Start the image
 
-    ```docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest```
+    ```
+    docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest
+    ```
 
    It takes about a minute for the image to reach a healthy state on my MacBook
 
 2. Connect to the image as sysdba
 
-    ```sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba```
+    ```
+    sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba @./soda
+    ```
 
    and run the following commands to enable JSON support
 
@@ -81,6 +94,7 @@ cd ../../../.. # Go back to Project Root
 
 ### Run Parse Server
 1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server. The databaseURI is configured to attach to the local 23c Oracle Database instance.
+
 ```
 {
   "appId": "APPLICATION_ID",
@@ -104,6 +118,7 @@ cd ../../../.. # Go back to Project Root
   }
 }  
 ```
+
 2. If using an Oracle Instant Client prior to 23ai. I am running on MacOS Intel and the most recent Instant Client for that platform is 19_16 so export the variable below.
 ```
 export ORACLEDB_VERSION=19
@@ -119,15 +134,21 @@ ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.
 ### Test the Local Stack
 1. Run a curl command
 
-    ```curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"score":12,"playerName":"scooby","cheatmode":false}' http://localhost:1338/parse/classes/GameScore```
+    ```
+    curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"score":12,"playerName":"scooby","cheatmode":false}' http://localhost:1338/parse/classes/GameScore
+    ```
 
    Upon success
 
-    ```{"objectId":"CdmLJT6Duc","createdAt":"2023-10-16T19:33:27.382Z"}```
+    ```
+    {"objectId":"CdmLJT6Duc","createdAt":"2023-10-16T19:33:27.382Z"}
+    ```
 
 2. Connect to the database and verify
 
-    ```sql pdbadmin/Welcome12345@localhost:1521/FREEPDB1```
+    ```
+    sql pdbadmin/Welcome12345@localhost:1521/FREEPDB1
+    ```
 
 3. Run SODA commands
 
@@ -165,11 +186,15 @@ ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.
 ### Running against Autonomous Database in the cloud
 1. Update databaseAdapter.options.databaseURI in config.json to point at the cloud database instance
 
-    ``` "databaseURI": "oracledb://username:password@tnsname",```
+    ``` 
+    "databaseURI": "oracledb://username:password@tnsname",
+    ```
 
 2. Download the cloud database wallet and use it when starting the server
 
-    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json```
+    ```
+    ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json
+    ```
 
 
 ## Cloud Code
