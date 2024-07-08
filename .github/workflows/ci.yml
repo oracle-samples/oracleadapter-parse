@@ -31,7 +31,7 @@ jobs:
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
            ls -la parse-server/src/Adapters/Storage/Oracle;
-           cp $PWD/oraCodeAndSpecs/Oracle/*.js $PWD/parse-server/src/Adapters/Storage/Oracle;
+           cp $PWD/oraCodeAndSpecs/*.js $PWD/parse-server/src/Adapters/Storage/Oracle;
            ls -la parse-server/src/Adapters/Storage;
            ls -la parse-server/src/Adapters/Storage/Oracle;  
     - name: Install Sqlcl
