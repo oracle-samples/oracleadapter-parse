@@ -1,6 +1,6 @@
 # Oracle Storage Adapter for Parse Server
 
-This document describes how to build and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free23c Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. The team is currently working with Parse to upstream the adapter to their [Parse repository](https://github.com/parse-community/parse-server) but, in the meantime, this is an early adopter version.
+This document describes how to build and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free Oracle Database 23ai Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. 
 
 ## Prerequisites
 
@@ -13,9 +13,15 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Installation
-1. Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Tested with version 6.4
+Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Supported version 7.1.0 and above.  
+
+There were changes in this release that supported:
+
+1. [Test Exclusion List](https://github.com/parse-community/parse-server/pull/8774)
+2. [Dynamic Database Adapter configuration](https://github.com/parse-community/parse-server/pull/8883)
+
 ```
-git clone --depth 1 --branch 6.4.0 https://github.com/parse-community/parse-server.git
+git clone --depth 1 --branch 7.1.0 https://github.com/parse-community/parse-server.git
 cd parse-server
 ```
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
@@ -23,8 +29,8 @@ cd parse-server
 cd src/Adapters/Storage
 git clone git@github.com:oracle-samples/oracleadapter-parse.git Oracle
 cd Oracle
-rm -rf .git    // IMPORTANT or build will fail
-cd ../../../.. // Go back to Project Root
+rm -rf .git    # IMPORTANT or build will fail
+cd ../../../.. # Go back to Project Root
 ```
 
 
@@ -32,7 +38,7 @@ cd ../../../.. // Go back to Project Root
 ### Building Parse with Oracle Storage Adpater
 1. Add the Oracle database dependency
 
-    ```npm install oracledb@6.4.0```
+    ```npm install oracledb@6.5.0```
 
     [Quick Start node-oracledb Installation](https://node-oracledb.readthedocs.io/en/latest/user_guide/installation.html#quick-start-node-oracledb-installation)
 2. Add the Parse File Adapter dependency
@@ -49,13 +55,13 @@ cd ../../../.. // Go back to Project Root
 ### Configuring Free23c Oracle database image
 1. Get and Start the image
 
-    ```docker run --name free23c -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest```
+    ```docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest```
 
    It takes about a minute for the image to reach a healthy state on my MacBook
 
 2. Connect to the image as sysdba
 
-    ```sql sys/Welcome12345@localhost:1521/free as sysdba```
+    ```sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba```
 
    and run the following commands to enable JSON support
 
@@ -67,12 +73,19 @@ cd ../../../.. // Go back to Project Root
     quit;
     ```
 
+    or run the commands as a script. Create a file called `soda` that contains the above commands
+
+    ```
+    sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba @./soda
+    ```
+
 ### Run Parse Server
 1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server. The databaseURI is configured to attach to the local 23c Oracle Database instance.
 ```
 {
   "appId": "APPLICATION_ID",
   "masterKey": "MASTER_KEY",
+  "allowClientClassCreation": true,
   "port": 1338,
   "logLevel": "info",
   "verbose": false,
@@ -83,7 +96,7 @@ cd ../../../.. // Go back to Project Root
     "module": "@parse/fs-files-adapter"
   },
   "databaseAdapter": {
-    "module": "../Adapters/Storage/Oracle/OracleStorageAdapter",
+    "module": "./Storage/Oracle/OracleStorageAdapter",
     "options": {
       "databaseURI": "oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1",
       "collectionPrefix": ""
@@ -91,14 +104,16 @@ cd ../../../.. // Go back to Project Root
   }
 }  
 ```
-2. If using an Oracle Instant Client prior to 23ai
+2. If using an Oracle Instant Client prior to 23ai. I am running on MacOS Intel and the most recent Instant Client for that platform is 19_16 so export the variable below.
 ```
 export ORACLEDB_VERSION=19
 ```
 
 3. Boot the Server using the Oracle Instant Client location
 
-    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8  npm start -- ./config.json```
+```
+ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.json
+```
 
 
 ### Test the Local Stack
@@ -154,7 +169,12 @@ export ORACLEDB_VERSION=19
 
 2. Download the cloud database wallet and use it when starting the server
 
-    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_8 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json```
+    ```ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json```
+
+
+## Cloud Code
+[Use Cloud Code to call Custom Oracle PL/SQL](./cloud/README.md)
+
 
 ## Contributing
 
@@ -166,7 +186,7 @@ Please consult the [security guide](./SECURITY.md) for our responsible security 
 
 ## License
 
-Copyright (c) 2023 Oracle and/or its affiliates.
+Copyright (c) 2024 Oracle and/or its affiliates.
 
 Released under the Universal Permissive License v1.0 as shown at
 <https://oss.oracle.com/licenses/upl/>.
