@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-         version: [7.1.0]
+         version: [7.2.0]
     steps:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
       with:
         repository: parse-community/parse-server
-        ref: 7.1.0
+        ref: ${{ matrix.version }}
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
