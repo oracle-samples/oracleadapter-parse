@@ -76,7 +76,7 @@ jobs:
            export LD_LIBRARY_PATH=${PWD}/instantclient_23_4;
            echo "This is LD LIBRARY PATH";
            echo $LD_LIBRARY_PATH; 
-           echo "Kick it with 23ai";
+           echo "Kick it";
            cd parse-server;
            cat package.json;
            npm install --save @parse/fs-files-adapter;
