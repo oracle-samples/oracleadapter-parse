@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: parse-community/parse-server
-        ref: mtrezza:test-add-test-IDs
+        ref: test-add-test-IDs
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
