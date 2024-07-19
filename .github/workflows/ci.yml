@@ -19,8 +19,8 @@ jobs:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
       with:
-        repository: ddrechse/parse-server
-        ref: useTestExclusionList
+        repository: parse-community/parse-server
+        ref: 7.3.0-alpha.5
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
@@ -76,7 +76,7 @@ jobs:
            export LD_LIBRARY_PATH=${PWD}/instantclient_23_4;
            echo "This is LD LIBRARY PATH";
            echo $LD_LIBRARY_PATH; 
-           echo "Kick it with 23ai";
+           echo "Kick it";
            cd parse-server;
            cat package.json;
            npm install --save @parse/fs-files-adapter;
