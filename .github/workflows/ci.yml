@@ -19,8 +19,8 @@ jobs:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
       with:
-        repository: mtrezza/parse-server
-        ref:  ci/fix-test-retry-logic
+        repository: parse-community/parse-server
+        ref:  alpha
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
