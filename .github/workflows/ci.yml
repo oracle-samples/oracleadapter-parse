@@ -26,8 +26,8 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: oracle-samples/oracleadapter-parse
-        ref: OracleParseStorageAdapter
-        path: removeTestExclusions        
+        ref: removeTestExclusions
+        path: oraCodeAndSpecs
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
            ls -la parse-server/src/Adapters/Storage/Oracle;
