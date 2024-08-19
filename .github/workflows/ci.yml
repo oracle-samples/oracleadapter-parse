@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-         version: [7.1.0]
+         version: [alpha]
     steps:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
       with:
         repository: oracle-samples/oracleadapter-parse
         ref: OracleParseStorageAdapter
-        path: oraCodeAndSpecs        
+        path: removeTestExclusions        
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
            ls -la parse-server/src/Adapters/Storage/Oracle;
