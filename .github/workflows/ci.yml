@@ -14,20 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-         version: [7.1.0]
+         version: [alpha]
     steps:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
       with:
         repository: parse-community/parse-server
-        ref: 7.1.0
+        ref:  alpha
         path: parse-server
     - name: Checkout templateCodeAndSpecs
       uses: actions/checkout@v2
       with:
         repository: oracle-samples/oracleadapter-parse
-        ref: OracleParseStorageAdapter
-        path: oraCodeAndSpecs        
+        ref: removeTestExclusions
+        path: oraCodeAndSpecs
     - name: Create Oracle Storage Adapter Dir
       run: mkdir parse-server/src/Adapters/Storage/Oracle;
            ls -la parse-server/src/Adapters/Storage/Oracle;
@@ -50,7 +50,6 @@ jobs:
       run: ls;
            echo $PWD;
            ls -la $PWD;
-           mv $PWD/oraCodeAndSpecs/spec/*.spec.js  parse-server/spec;
            mv $PWD/oraCodeAndSpecs/spec/testExclusionList.json parse-server/spec;
            mv $PWD/oraCodeAndSpecs/spec/jasmine.json parse-server/spec/support;
            cat parse-server/spec/support/jasmine.json;
@@ -78,7 +77,7 @@ jobs:
            export LD_LIBRARY_PATH=${PWD}/instantclient_23_4;
            echo "This is LD LIBRARY PATH";
            echo $LD_LIBRARY_PATH; 
-           echo "Kick it with 23ai";
+           echo "Run it";
            cd parse-server;
            cat package.json;
            npm install --save @parse/fs-files-adapter;
@@ -90,25 +89,25 @@ jobs:
            export PARSE_SERVER_DATABASE_ADAPTER='{"module":"../Adapters/Storage/Oracle/OracleStorageAdapter","options":{"databaseURI":"oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1","collectionPrefix":"test_"}}';
            echo $PARSE_SERVER_DATABASE_ADAPTER;
            npm run testonly;
-#    - name: Dump Container logs
-#      if: always()
-#      run: mkdir oralogs;
-#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
-#           docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
-#           ls -la oralogs;
-#           ls -la oradumps;
-#    - name: Archive Test Results
-#      if: always()
-#      uses: actions/upload-artifact@v1
-#      with:
-#       name: containerlogs
-#       path: oralogs/trace 
-#    - name: Archive Test Results
-#      if: always()
-#      uses: actions/upload-artifact@v1
-#      with:
-#       name: containerdumps
-#       path: oradumps       
+  #  - name: Dump Container logs
+  #    if: always()
+  #    run: mkdir oralogs;
+  #         docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
+  #         docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
+  #         ls -la oralogs;
+  #         ls -la oradumps;
+  #  - name: Archive Test Results
+  #    if: always()
+  #    uses: actions/upload-artifact@v1
+  #    with:
+  #     name: containerlogs
+  #     path: oralogs/trace
+  #  - name: Archive Test Results
+  #    if: always()
+  #    uses: actions/upload-artifact@v1
+  #    with:
+  #     name: containerdumps
+  #     path: oradumps
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
