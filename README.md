@@ -13,7 +13,7 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Installation
-Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Supported version 7.1.0 and above.  
+Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Supported version 7.3.0-alpha.7 and above.  
 
 There were changes in this release that supported:
 
@@ -21,7 +21,7 @@ There were changes in this release that supported:
 2. [Dynamic Database Adapter configuration](https://github.com/parse-community/parse-server/pull/8883)
 
 ```
-git clone --depth 1 --branch 7.1.0 https://github.com/parse-community/parse-server.git
+git clone --depth 1 --branch 7.3.0-alpha.7 https://github.com/parse-community/parse-server.git
 cd parse-server
 ```
 2. Clone this Oracle Samples repo into src/Adapters/Storage/Oracle
