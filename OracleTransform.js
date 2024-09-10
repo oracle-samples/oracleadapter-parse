@@ -3,7 +3,7 @@
 import log from '../../../logger';
 import _ from 'lodash';
 const Utils = require('../../../Utils');
-
+const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[-+]\d{2}:\d{2})?$/;
 var Parse = require('parse/node').Parse;
 
 const transformKey = (className, fieldName, schema) => {
@@ -547,6 +547,12 @@ function transformConstraint(constraint, field, count = false) {
 }
 
 const nestedOracleObjectToNestedParseObject = oracleObject => {
+  if(typeof oracleObject === 'string') {
+    // Check if string is an ISO 8601 format date 
+    if(iso8601Regex.test(oracleObject)) {
+      oracleObject = new Date(oracleObject);
+    }
+  }
   switch (typeof oracleObject) {
     case 'string':
     case 'number':
@@ -1469,7 +1475,7 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
 
 var DateCoder = {
   JSONToDatabase(json) {
-    return new Date(json.iso);
+    return new Date(json.iso).toISOString();
   },
 
   isValidJSON(value) {
