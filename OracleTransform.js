@@ -1475,7 +1475,7 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
 
 var DateCoder = {
   JSONToDatabase(json) {
-    return new Date(json.iso).toISOString();
+    return new Date(json.iso);
   },
 
   isValidJSON(value) {
