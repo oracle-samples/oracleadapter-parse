@@ -3,7 +3,6 @@
 import log from '../../../logger';
 import _ from 'lodash';
 const Utils = require('../../../Utils');
-const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[-+]\d{2}:\d{2})?$/;
 var Parse = require('parse/node').Parse;
 
 const transformKey = (className, fieldName, schema) => {
@@ -548,10 +547,8 @@ function transformConstraint(constraint, field, count = false) {
 
 const nestedOracleObjectToNestedParseObject = oracleObject => {
   if(typeof oracleObject === 'string') {
-    // Check if string is an ISO 8601 format date 
-    if(iso8601Regex.test(oracleObject)) {
-      oracleObject = new Date(oracleObject);
-    }
+    // Check if its an ISO Date
+     oracleObject = DateCoder.DatabaseToJSON(oracleObject)
   }
   switch (typeof oracleObject) {
     case 'string':
@@ -774,23 +771,19 @@ const parseObjectKeyValueToOracleObjectKeyValue = (restKey, restValue, schema) =
       return { key: '_id', value: restValue };
     case 'expiresAt':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
+      coercedToDate = DateCoder.DatabaseToJSON(transformedValue);
       return { key: 'expiresAt', value: coercedToDate };
     case '_email_verify_token_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
+      coercedToDate = DateCoder.DatabaseToJSON(transformedValue);
       return { key: '_email_verify_token_expires_at', value: coercedToDate };
     case '_account_lockout_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
+      coercedToDate = DateCoder.DatabaseToJSON(transformedValue);
       return { key: '_account_lockout_expires_at', value: coercedToDate };
     case '_perishable_token_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
+      coercedToDate = DateCoder.DatabaseToJSON(transformedValue);
       return { key: '_perishable_token_expires_at', value: coercedToDate };
     case '_password_changed_at':
       transformedValue = transformTopLevelAtom(restValue);
@@ -1132,7 +1125,9 @@ function transformTopLevelAtom(atom, field) {
         return `${atom.className}$${atom.objectId}`;
       }
       if (DateCoder.isValidJSON(atom)) {
-        return DateCoder.JSONToDatabase(atom);
+          const dt = DateCoder.JSONToDatabase(atom);
+          if (dt.toString() === "Invalid Date") return dt;
+          return "ISODate(" + dt.toISOString() + ")";
       }
       if (BytesCoder.isValidJSON(atom)) {
         return BytesCoder.JSONToDatabase(atom);
@@ -1352,18 +1347,22 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
             break;
           case 'updatedAt':
           case '_updated_at':
+            oracleObject[key] = DateCoder.DatabaseToJSON(oracleObject[key]);
             restObject['updatedAt'] = Parse._encode(new Date(oracleObject[key])).iso;
             break;
           case 'createdAt':
           case '_created_at':
+            oracleObject[key] = DateCoder.DatabaseToJSON(oracleObject[key]);
             restObject['createdAt'] = Parse._encode(new Date(oracleObject[key])).iso;
             break;
           case 'expiresAt':
           case '_expiresAt':
+            oracleObject[key] = DateCoder.DatabaseToJSON(oracleObject[key]);
             restObject['expiresAt'] = Parse._encode(new Date(oracleObject[key]));
             break;
           case 'lastUsed':
           case '_last_used':
+            oracleObject[key] = DateCoder.DatabaseToJSON(oracleObject[key]);
             restObject['lastUsed'] = Parse._encode(new Date(oracleObject[key])).iso;
             break;
           case 'timesUsed':
@@ -1481,6 +1480,20 @@ var DateCoder = {
   isValidJSON(value) {
     return typeof value === 'object' && value !== null && value.__type === 'Date';
   },
+
+  DatabaseToJSON(dbDate) {
+    const isoRegex = /ISODate\((.*?)\)/;
+
+    // Check if string is an ISO 8601 format date 
+    if(dbDate !== null && typeof dbDate === 'string') {
+      const match = dbDate.match(isoRegex);
+      if(match && match[1]) {
+        return new Date(match[1]);
+      }
+    }
+    return dbDate;
+  }
+
 };
 
 var BytesCoder = {
