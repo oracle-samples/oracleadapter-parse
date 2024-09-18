@@ -3,7 +3,6 @@
 import log from '../../../logger';
 import _ from 'lodash';
 const Utils = require('../../../Utils');
-
 var Parse = require('parse/node').Parse;
 
 const transformKey = (className, fieldName, schema) => {
@@ -150,7 +149,7 @@ function transformConstraint(constraint, field, count = false) {
           );
         }
 
-        answer[key] = transformer(val);
+        answer[key] = DateCoder.DatabaseToJSON(transformer(val));
         break;
       }
 
@@ -762,35 +761,25 @@ function transformWhere(className, restWhere, schema, count = false) {
 const parseObjectKeyValueToOracleObjectKeyValue = (restKey, restValue, schema) => {
   // Check if the schema is known since it's a built-in field.
   let transformedValue;
-  let coercedToDate;
+
   switch (restKey) {
     case 'objectId':
       return { key: '_id', value: restValue };
     case 'expiresAt':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
-      return { key: 'expiresAt', value: coercedToDate };
+      return { key: 'expiresAt', value: transformedValue };
     case '_email_verify_token_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
-      return { key: '_email_verify_token_expires_at', value: coercedToDate };
+      return { key: '_email_verify_token_expires_at', value: transformedValue };
     case '_account_lockout_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
-      return { key: '_account_lockout_expires_at', value: coercedToDate };
+      return { key: '_account_lockout_expires_at', value: transformedValue };
     case '_perishable_token_expires_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
-      return { key: '_perishable_token_expires_at', value: coercedToDate };
+      return { key: '_perishable_token_expires_at', value: transformedValue };
     case '_password_changed_at':
       transformedValue = transformTopLevelAtom(restValue);
-      coercedToDate =
-        typeof transformedValue === 'string' ? new Date(transformedValue) : transformedValue;
-      return { key: '_password_changed_at', value: coercedToDate };
+      return { key: '_password_changed_at', value: transformedValue };
     case '_failed_login_count':
     case '_rperm':
     case '_wperm':
@@ -1012,9 +1001,6 @@ const transformKeyValueForUpdate = (className, restKey, restValue, parseFormatSc
   // Handle atomic values
   var value = transformTopLevelAtom(restValue);
   if (value !== CannotTransform) {
-    if (timeField && typeof value === 'string') {
-      value = new Date(value);
-    }
     if (restKey.indexOf('.') > 0) {
       return { key, value: restValue };
     }
@@ -1346,19 +1332,27 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
             break;
           case 'updatedAt':
           case '_updated_at':
-            restObject['updatedAt'] = Parse._encode(new Date(oracleObject[key])).iso;
+            restObject['updatedAt'] = DateCoder.DatabaseToJSON(oracleObject[key]);
+            if (restObject['updatedAt'] !== null)
+              restObject['updatedAt'] = Parse._encode(restObject['updatedAt']).iso;
             break;
           case 'createdAt':
           case '_created_at':
-            restObject['createdAt'] = Parse._encode(new Date(oracleObject[key])).iso;
+            restObject['createdAt'] = DateCoder.DatabaseToJSON(oracleObject[key]);
+            if (restObject['createdAt'] !== null)
+              restObject['createdAt'] = Parse._encode(restObject['createdAt']).iso;
             break;
           case 'expiresAt':
           case '_expiresAt':
-            restObject['expiresAt'] = Parse._encode(new Date(oracleObject[key]));
+            restObject['expiresAt'] = DateCoder.DatabaseToJSON(oracleObject[key]);
+            if (restObject['expiresAt'] !== null)
+              restObject['expiresAt'] = Parse._encode(restObject['expiresAt']);
             break;
           case 'lastUsed':
           case '_last_used':
-            restObject['lastUsed'] = Parse._encode(new Date(oracleObject[key])).iso;
+            restObject['lastUsed'] = DateCoder.DatabaseToJSON(oracleObject[key]);
+            if (restObject['lastUsed'] !== null)
+              restObject['lastUsed'] = Parse._encode(restObject['lastUsed']).iso;
             break;
           case 'timesUsed':
           case 'times_used':
@@ -1444,6 +1438,13 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
                 restObject[key] = BytesCoder.databaseToJSON(value);
                 break;
               }
+              if (
+                schema.fields[key] &&
+                schema.fields[key].type === 'Date' 
+              ) {
+                restObject[key] = Parse._encode(DateCoder.DatabaseToJSON(value));
+                break;
+              }
             }
             restObject[key] = nestedOracleObjectToNestedParseObject(oracleObject[key]);
         }
@@ -1469,12 +1470,21 @@ const oracleObjectToParseObject = (className, oracleObject, schema) => {
 
 var DateCoder = {
   JSONToDatabase(json) {
-    return new Date(json.iso);
+    const dt = new Date(json.iso);
+    return dt;
   },
 
   isValidJSON(value) {
     return typeof value === 'object' && value !== null && value.__type === 'Date';
   },
+
+  DatabaseToJSON(dbDate) {
+    if(dbDate !== null && typeof dbDate === 'string') {
+      return new Date(dbDate);  
+    }
+    return dbDate;
+  }
+
 };
 
 var BytesCoder = {
