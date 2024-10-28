@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-         version: [7.3.0-alpha.7]
+         version: [7.3.0]
     steps:
     - name: Checkout parse-server ${{ matrix.version }}
       uses: actions/checkout@v2
@@ -53,8 +53,8 @@ jobs:
            mv $PWD/oraCodeAndSpecs/spec/testExclusionList.json parse-server/spec;
            mv $PWD/oraCodeAndSpecs/spec/jasmine.json parse-server/spec/support;
            cat parse-server/spec/support/jasmine.json;
-    - name: Run Free23c
-      run: docker run --name free23c -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest;
+    - name: Run Free23ai
+      run: docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest;
            docker ps -a;
            docker images;
     - name: Wait for container
@@ -92,8 +92,8 @@ jobs:
   #  - name: Dump Container logs
   #    if: always()
   #    run: mkdir oralogs;
-  #         docker cp free23c:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
-  #         docker cp free23c:/opt/oracle/diag/rdbms/free/FREE oradumps;
+  #         docker cp free23ai:/opt/oracle/diag/rdbms/free/FREE/trace oralogs;
+  #         docker cp free23ai:/opt/oracle/diag/rdbms/free/FREE oradumps;
   #         ls -la oralogs;
   #         ls -la oradumps;
   #  - name: Archive Test Results
