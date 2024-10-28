@@ -67,7 +67,7 @@ cd ../../../.. # Go back to Project Root
 1. Get and Start the image
 
     ```
-    docker run --name free23ai -d -p 1521:1521 -e ORACLE_PASSWORD=Welcome12345 -e APP_USER=testuser -e APP_USER_PASSWORD=Welcome12345 gvenzl/oracle-free:23.5-slim-faststart
+    docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest
     ```
 
    It takes about a minute for the image to reach a healthy state on my MacBook
