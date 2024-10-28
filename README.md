@@ -37,7 +37,7 @@ cd ../../../.. # Go back to Project Root
 
 
 ## Getting Started
-### Building Parse with Oracle Storage Adpater
+### Building Parse with Oracle Storage Adapter
 1. Add the Oracle database dependency
 
     ```
