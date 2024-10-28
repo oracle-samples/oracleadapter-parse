@@ -1,6 +1,6 @@
-# Oracle Storage Adapter for Parse Server
+# Oracle Storage Adapter for Parse Server on Apple Silicon
 
-This document describes how to build and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter based on the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest). It will demonstrate running against the [Free Oracle Database 23ai Docker container](https://www.oracle.com/database/free) and the [JSON Autonomoumous database](https://www.oracle.com/autonomous-database/autonomous-json-database/) in the cloud. 
+This document describes how to build and run [Parse Server](https://parseplatform.org/) with the new Oracle storage adapter on [Apple Silicon](https://en.wikipedia.org/wiki/Apple_silicon). It will demonstrate running against the [Free Oracle Database 23ai Docker container](https://www.oracle.com/database/free) using the [Oracle NodeJS libraries](https://node-oracledb.readthedocs.io/en/latest).
 
 ## Prerequisites
 
@@ -13,7 +13,6 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Installation
-[Apple Silicon Installation](./AppleArm.md) otherwise continue below
 
 Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Supported version 7.3.0 and above.  
 
@@ -34,7 +33,6 @@ cd Oracle
 rm -rf .git    # IMPORTANT or build will fail
 cd ../../../.. # Go back to Project Root
 ```
-
 
 ## Getting Started
 ### Building Parse with Oracle Storage Adpater
@@ -67,7 +65,7 @@ cd ../../../.. # Go back to Project Root
 1. Get and Start the image
 
     ```
-    docker run --name free23ai -d -p 1521:1521 -e ORACLE_PASSWORD=Welcome12345 -e APP_USER=testuser -e APP_USER_PASSWORD=Welcome12345 gvenzl/oracle-free:23.5-slim-faststart
+    docker run --name free23ai -d -p 1521:1521 -e ORACLE_PWD=Welcome12345 container-registry.oracle.com/database/free:latest
     ```
 
    It takes about a minute for the image to reach a healthy state on my MacBook
@@ -75,7 +73,7 @@ cd ../../../.. # Go back to Project Root
 2. Connect to the image as sysdba
 
     ```
-    sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba
+    sql sys/Welcome12345@localhost:1521 as sysdba
     ```
 
    and run the following commands to enable JSON support
@@ -91,8 +89,8 @@ cd ../../../.. # Go back to Project Root
     or run the commands as a script. Create a file called `soda` that contains the above commands
 
     ```
-    sql sys/Welcome12345@localhost:1521/freepdb1 as sysdba @./soda
-    ```
+    sql sys/Welcome12345@localhost:1521 as sysdba @./soda
+    ```    
 
 ### Run Parse Server
 1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server. The databaseURI is configured to attach to the local 23ai Oracle Database instance.
@@ -114,24 +112,18 @@ cd ../../../.. # Go back to Project Root
   "databaseAdapter": {
     "module": "./Storage/Oracle/OracleStorageAdapter",
     "options": {
-      "databaseURI": "oracledb://pdbadmin:Welcome12345@localhost:1521/freepdb1",
+      "databaseURI": "oracledb://testuser:Welcome12345@localhost:1521/freepdb1",
       "collectionPrefix": ""
     }
   }
-}  
+}
 ```
 
-2. If using an Oracle Instant Client prior to 23ai. I am running on MacOS Intel and the most recent Instant Client for that platform is 19_16 so export the variable below.
-```
-export ORACLEDB_VERSION=19
-```
-
-3. Boot the Server using the Oracle Instant Client location
+2. Boot the Server using the Oracle Instant Client location
 
 ```
-ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.json
+ORACLE_CLIENT_LOCATION=/Users/DDRECHSE/instantclient_23_3  npm start -- ./config.json
 ```
-
 
 ### Test the Local Stack
 1. Run a curl command
@@ -149,7 +141,7 @@ ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.
 2. Connect to the database and verify
 
     ```
-    sql pdbadmin/Welcome12345@localhost:1521/FREEPDB1
+    sql testuser/Welcome12345@localhost:1521/FREEPDB1
     ```
 
 3. Run SODA commands
@@ -184,36 +176,3 @@ ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16  npm start -- ./config.
 
     ```
 
- 
-### Running against Autonomous Database in the cloud
-1. Update databaseAdapter.options.databaseURI in config.json to point at the cloud database instance
-
-    ``` 
-    "databaseURI": "oracledb://username:password@tnsname",
-    ```
-
-2. Download the cloud database wallet and use it when starting the server
-
-    ```
-    ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_19_16 ORACLE_WALLET_LOCATION=/Users/myuser/wallet-oradb  npm start -- ./config.json
-    ```
-
-
-## Cloud Code
-[Use Cloud Code to call Custom Oracle PL/SQL](./cloud/README.md)
-
-
-## Contributing
-
-This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
-
-## Security
-
-Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
-
-## License
-
-Copyright (c) 2024 Oracle and/or its affiliates.
-
-Released under the Universal Permissive License v1.0 as shown at
-<https://oss.oracle.com/licenses/upl/>.
