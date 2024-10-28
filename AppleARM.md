@@ -80,9 +80,9 @@ cd ../../../.. # Go back to Project Root
 
     ```
     alter session set container=FREEPDB1;
-    grant db_developer_role to pdbadmin;
-    grant soda_app to pdbadmin;
-    GRANT UNLIMITED TABLESPACE TO pdbadmin;
+    grant db_developer_role to testuser;
+    grant soda_app to testuser;
+    GRANT UNLIMITED TABLESPACE TO testuser;
     quit;
     ```
 
