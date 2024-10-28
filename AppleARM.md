@@ -122,7 +122,7 @@ cd ../../../.. # Go back to Project Root
 2. Boot the Server using the Oracle Instant Client location
 
 ```
-ORACLE_CLIENT_LOCATION=/Users/DDRECHSE/instantclient_23_3  npm start -- ./config.json
+ORACLE_CLIENT_LOCATION=/Users/myuser/instantclient_23_3  npm start -- ./config.json
 ```
 
 ### Test the Local Stack
