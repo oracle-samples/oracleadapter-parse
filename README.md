@@ -13,7 +13,7 @@ The Oracle Instant Client is a set of software libraries that allow users to con
 [Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
 
 ## Installation
-[Apple Silicon Installation](./AppleArm.md) otherwise continue below
+[Apple Silicon Installation](./AppleARM.md) otherwise continue below
 
 Clone [Parse Server Repository](https://github.com/parse-community/parse-server). Supported version 7.3.0 and above.  
 
