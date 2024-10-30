@@ -10,7 +10,7 @@ The Oracle SQL client is a software application that allows users to connect to 
 
 The Oracle Instant Client is a set of software libraries that allow users to connect to an Oracle database without a full Oracle database installation.
 
-[Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
+[Instant Client Libraries](https://www.oracle.com/database/technologies/instant-client/downloads.html)
 
 ## Installation
 [Apple Silicon Installation](./AppleARM.md) otherwise continue below
