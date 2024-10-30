@@ -10,7 +10,7 @@ The Oracle SQL client is a software application that allows users to connect to 
 
 The Oracle Instant Client is a set of software libraries that allow users to connect to an Oracle database without a full Oracle database installation.
 
-[Instant Client Libraries](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
+[Instant Client Libraries](https://www.oracle.com/database/technologies/instant-client/downloads.html)
 
 ## Installation
 
@@ -68,29 +68,6 @@ cd ../../../.. # Go back to Project Root
     docker run --name free23ai -d -p 1521:1521 -e ORACLE_PASSWORD=Welcome12345 -e APP_USER=testuser -e APP_USER_PASSWORD=Welcome12345 gvenzl/oracle-free:23.5-slim-faststart
     ```
 
-   It takes about a minute for the image to reach a healthy state on my MacBook
-
-2. Connect to the image as sysdba
-
-    ```
-    sql sys/Welcome12345@localhost:1521 as sysdba
-    ```
-
-   and run the following commands to enable JSON support
-
-    ```
-    alter session set container=FREEPDB1;
-    grant db_developer_role to testuser;
-    grant soda_app to testuser;
-    GRANT UNLIMITED TABLESPACE TO testuser;
-    quit;
-    ```
-
-    or run the commands as a script. Create a file called `soda` that contains the above commands
-
-    ```
-    sql sys/Welcome12345@localhost:1521 as sysdba @./soda
-    ```    
 
 ### Run Parse Server
 1. Create a config.json.  This is a minimal set of [configuration parameters](https://parseplatform.org/parse-server/api/master/ParseServerOptions.html) for booting the server. The databaseURI is configured to attach to the local 23ai Oracle Database instance.
