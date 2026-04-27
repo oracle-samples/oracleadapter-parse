@@ -548,6 +548,49 @@ export class OracleStorageAdapter implements StorageAdapter {
     }
   }
 
+  /**
+   * Apply the update to all objects that match the given Parse Query.
+   * This is used when the 'many' option is set to true in DatabaseController.update().
+   *
+   * @param {string} className - The class name
+   * @param {SchemaType} schema - The schema
+   * @param {QueryType} query - The query to match documents
+   * @param {any} update - The update to apply
+   * @param {any} transactionalSession - Optional transaction session
+   * @returns {Promise<Array>} - Array of updated objects
+   */
+  async updateObjectsByQuery(className, schema, query, update, transactionalSession) {
+    try {
+      logger.verbose('StorageAdapter updateObjectsByQuery for ' + className);
+      logger.verbose('StorageAdapter updateObjectsByQuery query = ' + JSON.stringify(query));
+      logger.verbose('StorageAdapter updateObjectsByQuery update = ' + JSON.stringify(update));
+
+      schema = convertParseSchemaToOracleSchema(schema);
+      let oraWhere = transformWhere(className, query, schema);
+      const oraUpdate = transformUpdate(className, update, schema);
+
+      // Check if this query needs Oracle Storage Adapter _wperm syntax
+      oraWhere = this.checkUserQuery(oraWhere);
+
+      const collection = this._adaptiveCollection(className);
+      const results = await collection.updateMany(oraWhere, oraUpdate, transactionalSession);
+
+      logger.verbose(
+        'StorageAdapter updateObjectsByQuery returns ' + results.length + ' updated documents'
+      );
+
+      // Transform the results back to Parse format
+      const parseResults = results.map(result =>
+        oracleObjectToParseObject(className, result, schema)
+      );
+
+      return parseResults;
+    } catch (error) {
+      logger.error('StorageAdapter updateObjectsByQuery Error for ' + className + ': ' + error);
+      this.handleError(error);
+    }
+  }
+
   /*
       Parse has ACL formats that are part of a query which causes an error which was fixed in
       https://bug.oraclecorp.com/pls/bug/webbug_print.show?c_rptno=34596223

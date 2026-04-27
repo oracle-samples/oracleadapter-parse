@@ -362,7 +362,14 @@ export default class OracleCollection {
             });
             updateObj = oldContent;
           } else {
-            updateObj = _.merge(oldContent, update);
+            // Use mergeWith with an array customizer so that arrays in `update`
+            // fully replace arrays in `oldContent`. Plain `_.merge` merges
+            // arrays by index, which silently preserves trailing elements when
+            // the new array is shorter — corrupting any field whose update
+            // shrinks an array (e.g. participantsIds when removing a user).
+            updateObj = _.mergeWith(oldContent, update, (objVal, srcVal) =>
+              Array.isArray(srcVal) ? srcVal : undefined
+            );
           }
         }
         logger.verbose('Updated Object = ' + JSON.stringify(updateObj));
@@ -1191,6 +1198,277 @@ export default class OracleCollection {
   async updateOne(query, update) {
     logger.verbose('UpdateOne calling findOneandUpdate');
     return this.findOneAndUpdate(query, update, null);
+  }
+
+  /**
+   * Update multiple documents matching a query.
+   * This is the Oracle SODA equivalent of MongoDB's updateMany.
+   * Since Oracle SODA doesn't have a native bulk update, we iterate over matching documents.
+   *
+   * @param {Object} query - The query to match documents
+   * @param {Object} update - The update to apply
+   * @param {any} transactionalSession - Optional transaction session (not fully supported)
+   * @returns {Promise<Array>} - Array of updated documents
+   */
+  async updateMany(query, update, transactionalSession) {
+    try {
+      logger.verbose('in Collection updateMany query = ' + JSON.stringify(query));
+      logger.verbose(
+        'use transactionalSession to make linter happy ' + JSON.stringify(transactionalSession)
+      );
+
+      // Find all matching documents
+      const results = await this._rawFind(query, { type: 'all' }).then(result => {
+        return result;
+      });
+
+      if (!results || results.length === 0) {
+        logger.verbose('updateMany: No documents found matching query');
+        return [];
+      }
+
+      logger.verbose('updateMany: Found ' + results.length + ' documents to update');
+
+      const updatedDocs = [];
+
+      // Process each document
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        let currentUpdate = JSON.parse(JSON.stringify(update)); // Deep clone to avoid mutation
+
+        // Apply the same update transformation logic as findOneAndUpdate
+        let updateObj;
+
+        //************************************************************************************************/
+        // Modify Update based on Mongo operators
+        //
+        // Look for $unset, Mongo's deleteField
+        const newUpdate = new Object();
+        const fieldNames = new Array();
+        Object.keys(currentUpdate).forEach(item => {
+          if (item === '$unset') {
+            Object.keys(currentUpdate[item]).forEach(fieldItem => {
+              fieldNames.push(fieldItem);
+            });
+          } else {
+            if (item === '_updated_at') {
+              newUpdate['updatedAt'] = currentUpdate[item];
+            } else {
+              newUpdate[item] = currentUpdate[item];
+            }
+          }
+        });
+
+        // If fieldNames > 0, we need to handle field deletion for this specific document
+        let currentContent = result.content;
+        if (fieldNames.length > 0) {
+          fieldNames.forEach(fieldName => {
+            delete currentContent[fieldName];
+          });
+          currentUpdate = newUpdate;
+        }
+
+        // Process Increments $inc
+        const newIncUpdate = new Object();
+        let incUpdt = false;
+        Object.keys(currentUpdate).forEach(item => {
+          if (item === '$inc') {
+            Object.keys(currentUpdate[item]).forEach(it2 => {
+              incUpdt = true;
+              _.set(currentContent, it2, _.result(currentContent, it2) + currentUpdate[item][it2]);
+            });
+          } else {
+            if (item === '_updated_at') {
+              newIncUpdate['updatedAt'] = currentUpdate[item];
+            } else {
+              newIncUpdate[item] = currentUpdate[item];
+            }
+          }
+        });
+
+        if (incUpdt) {
+          currentUpdate = newIncUpdate;
+        }
+
+        // Process $addToSet
+        const newAddToSetUpdate = new Object();
+        let addToSetUpdt = false;
+        Object.keys(currentUpdate).forEach(item => {
+          if (item === '$addToSet') {
+            Object.keys(currentUpdate[item]).forEach(it2 => {
+              Object.keys(currentUpdate[item][it2]).forEach(it3 => {
+                if (it3 === '$each') {
+                  const updtArray = currentUpdate[item][it2][it3];
+                  const temp = it2.split('.');
+                  let newArray;
+                  if (temp.length > 1) {
+                    newArray = currentContent[temp[0]][temp[1]];
+                  } else {
+                    newArray = currentContent[it2];
+                  }
+                  if (newArray) {
+                    updtArray.forEach(updt => {
+                      if (typeof updt === 'object') {
+                        if (!newArray.some(entry => Object.keys(entry)[0] === Object.keys(updt)[0])) {
+                          addToSetUpdt = true;
+                          newArray.push(updt);
+                        }
+                      } else {
+                        if (!newArray.includes(updt)) {
+                          addToSetUpdt = true;
+                          newArray.push(updt);
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            });
+          } else {
+            if (item === '_updated_at') {
+              newAddToSetUpdate['updatedAt'] = currentUpdate[item];
+            } else {
+              newAddToSetUpdate[item] = currentUpdate[item];
+            }
+          }
+        });
+
+        if (addToSetUpdt) {
+          currentUpdate = newAddToSetUpdate;
+        }
+
+        // Process $pullAll
+        const newPullAllUpdate = new Object();
+        let pullAllUpdt = false;
+        Object.keys(currentUpdate).forEach(item => {
+          if (item === '$pullAll') {
+            Object.keys(currentUpdate[item]).forEach(it2 => {
+              const updtArray = currentUpdate[item][it2];
+              const rsltArray = currentContent[it2];
+              if (rsltArray) {
+                const newArray = new Array();
+                updtArray.forEach(updt => {
+                  if (typeof updt === 'object') {
+                    rsltArray.forEach(entry => {
+                      if (Object.keys(entry)[0] != Object.keys(updt)[0]) {
+                        newArray.push(entry);
+                        pullAllUpdt = true;
+                      }
+                    });
+                  }
+                  newPullAllUpdate[it2] = newArray;
+                });
+              }
+            });
+          } else {
+            if (item === '_updated_at') {
+              newPullAllUpdate['updatedAt'] = currentUpdate[item];
+            } else {
+              newPullAllUpdate[item] = currentUpdate[item];
+            }
+          }
+        });
+
+        if (pullAllUpdt) {
+          currentUpdate = newPullAllUpdate;
+        }
+
+        // End of Transform Update
+        //************************************************************************************************/
+
+        const key = result.key;
+        const version = result.version;
+        const oldContent = currentContent;
+
+        // Check for empty object and remove it from original
+        Object.keys(currentUpdate).forEach(item => {
+          if (
+            typeof currentUpdate[item] === 'object' &&
+            currentUpdate[item] !== null &&
+            item !== 'updatedAt' &&
+            Object.keys(currentUpdate[item]).length === 0
+          ) {
+            _.unset(oldContent, item);
+          }
+        });
+
+        if (currentUpdate.fieldName) {
+          const theUpdate = { [currentUpdate.fieldName]: currentUpdate.theFieldType };
+          updateObj = { ...oldContent, ...theUpdate };
+        } else {
+          if (pullAllUpdt || currentUpdate['_metadata']) {
+            Object.keys(currentUpdate).forEach(item => {
+              const found = Object.keys(oldContent).find(k => k === '_metadata');
+              if (item === '_metadata') {
+                if (found) {
+                  if (
+                    Object.prototype.hasOwnProperty.call(oldContent[item], 'class_permissions') &&
+                    Object.prototype.hasOwnProperty.call(currentUpdate[item], 'class_permissions')
+                  ) {
+                    _.set(oldContent[item], 'class_permissions', currentUpdate[item]['class_permissions']);
+                  } else {
+                    _.merge(oldContent['_metadata'], currentUpdate[item]);
+                  }
+                } else {
+                  _.set(oldContent, item, currentUpdate[item]);
+                }
+              } else {
+                _.set(oldContent, item, currentUpdate[item]);
+              }
+            });
+            updateObj = oldContent;
+          } else {
+            // See findOneAndUpdate above: array values in `currentUpdate`
+            // must fully replace arrays in `oldContent` rather than merge
+            // by index, otherwise shrinking arrays silently retain their
+            // trailing elements.
+            updateObj = _.mergeWith(oldContent, currentUpdate, (objVal, srcVal) =>
+              Array.isArray(srcVal) ? srcVal : undefined
+            );
+          }
+        }
+
+        // Update the document
+        let localConn = null;
+        try {
+          localConn = await this.getCollectionConnection();
+          const replaceResult = await this._oracleCollection
+            .find()
+            .key(key)
+            .version(version)
+            .replaceOne(updateObj);
+
+          if (replaceResult.replaced === true) {
+            updatedDocs.push(updateObj);
+          } else {
+            // Retry once if version mismatch
+            logger.verbose('updateMany: Retrying update for key ' + key);
+            const retryResult = await this._rawFind({ _id: oldContent._id }, { type: 'one' });
+            if (retryResult && Object.keys(retryResult).length > 0) {
+              const retryReplaceResult = await this._oracleCollection
+                .find()
+                .key(retryResult.key)
+                .version(retryResult.version)
+                .replaceOne(updateObj);
+              if (retryReplaceResult.replaced === true) {
+                updatedDocs.push(updateObj);
+              }
+            }
+          }
+        } finally {
+          if (localConn) {
+            await localConn.close();
+            localConn = null;
+          }
+        }
+      }
+
+      logger.verbose('updateMany: Successfully updated ' + updatedDocs.length + ' documents');
+      return updatedDocs;
+    } catch (error) {
+      logger.error('Collection updateMany ERROR: ', error);
+      throw error;
+    }
   }
 
   async insertOne(object) {
